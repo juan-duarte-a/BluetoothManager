@@ -32,8 +32,9 @@ export const styles = StyleSheet.create({
   scanButtonText: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
+    justifyContent: 'center',
   },
   noDevicesText: {
     textAlign: 'center',
@@ -61,5 +62,6 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 20,
     paddingHorizontal: 20,
+    justifyContent: 'center',
   },
 });

@@ -78,6 +78,7 @@ const App = () => {
     let stopDiscoverListener = BleManagerEmitter.addListener(
       'BleManagerDiscoverPeripheral',
       (peripheral: PeripheralItem) => {
+        console.log(`Discover -> Name: ${peripheral.name}, ID: ${peripheral.id})`);
         peripheral.connected = false;
         peripherals.set(peripheral.id, peripheral);
         setDiscoveredDevices(Array.from(peripherals.values()));

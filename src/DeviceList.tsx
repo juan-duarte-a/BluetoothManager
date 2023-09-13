@@ -15,7 +15,7 @@ interface DeviceListProps {
 }
 
 export const DeviceList: React.FC<DeviceListProps> = ({ peripheral, connect, disconnect }) => {
-  const { name, rssi, connected } = peripheral;
+  const { name, id, rssi, connected } = peripheral;
 
   return (
     <>
@@ -23,6 +23,7 @@ export const DeviceList: React.FC<DeviceListProps> = ({ peripheral, connect, dis
         <View style={styles.deviceContainer}>
           <View style={styles.deviceItem}>
             <Text style={styles.deviceName}>{name}</Text>
+            <Text style={styles.deviceInfo}>ID: {id}</Text>
             <Text style={styles.deviceInfo}>RSSI: {rssi}</Text>
           </View>
 
