@@ -17,11 +17,13 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     marginTop: 20,
+    fontWeight: '600',
   },
   subtitle: {
-    fontSize: 24,
-    marginBottom: 10,
+    fontSize: 26,
+    marginBottom: 20,
     marginTop: 20,
+    fontWeight: '600',
   },
   scanButton: {
     backgroundColor: '#2196F3',
@@ -29,16 +31,24 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 20,
   },
+  scanButtonScanning: {
+    backgroundColor: '#5bbf5f',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+
   scanButtonText: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     justifyContent: 'center',
   },
   noDevicesText: {
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 0,
+    marginBottom: 10,
     fontStyle: 'italic',
   },
   deviceContainer: {
