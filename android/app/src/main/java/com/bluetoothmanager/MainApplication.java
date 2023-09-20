@@ -1,4 +1,4 @@
-package com.bluetoothtest;
+package com.bluetoothmanager;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

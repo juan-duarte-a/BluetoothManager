@@ -37,7 +37,6 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 20,
   },
-
   scanButtonText: {
     color: 'white',
     textAlign: 'center',
@@ -67,6 +66,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
   },
   deviceButton: {
+    width: 127,
     backgroundColor: '#2196F3',
     padding: 8,
     borderRadius: 5,

@@ -1,173 +1,33 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-native/no-inline-styles */
 
-import React, { useState, useEffect } from 'react';
+import { useContext } from 'react';
 import {
   Text,
-  Alert,
   View,
-  Platform,
   StatusBar,
   SafeAreaView,
-  NativeModules,
   useColorScheme,
   TouchableOpacity,
-  NativeEventEmitter,
-  PermissionsAndroid,
   ScrollView,
 } from 'react-native';
 import { styles } from './src/styles/styles';
-import { DeviceList } from './src/DeviceList';
-import BleManager, { Peripheral } from 'react-native-ble-manager';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { PeripheralItem } from './src/DeviceList';
-
-const bleManagerModule = NativeModules.BleManager;
-const bleManagerEmitter = new NativeEventEmitter(bleManagerModule);
-
-const peripheralItem: Function = (peripheral: Peripheral) => {
-  return { ...peripheral, connected: true };
-};
+import { DeviceList } from './src/DeviceList';
+import { AppContext, AppProvider, BluetoothManagerInit, useConnect, useDisconnect, useScan } from './src/BluetoothManager';
 
 const App = () => {
-  const detectedPeripherals: Map<String, PeripheralItem> = new Map();
-  const discoveredPeripherals: Map<String, PeripheralItem> = new Map();
-  const connectedPeripherals: Map<String, PeripheralItem> = new Map();
-  const [isScanning, setIsScanning] = useState(false);
-  const [detectedDevices, setDetectedDevices] = useState<PeripheralItem[]>([]);
-  const [discoveredDevices, setDiscoveredDevices] = useState<PeripheralItem[]>([]);
-  const [connectedDevices, setConnectedDevices] = useState<PeripheralItem[]>([]);
+  const { isScanning,
+    detectedDevices,
+    discoveredDevices,
+    connectedDevices }
+    = useContext(AppContext)!;
 
-  const handleLocationPermission = async () => {
-    console.log(`Platform: ${Platform.OS}`);
-    console.log(`Platform version: ${Platform.Version}`);
+  const { scan } = useScan();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
 
-    if (Platform.OS === 'android' && Platform.Version >= 23) {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Location permission granted');
-        } else {
-          console.log('Location permission denied');
-        }
-      } catch (error) {
-        console.log('Error requesting location permission:', error);
-      }
-    }
-  };
-
-  const handleGetConnectedDevices = () => {
-    BleManager.getBondedPeripherals().then(results => {
-      for (let i = 0; i < results.length; i++) {
-        let peripheral: PeripheralItem = peripheralItem(results[i]);
-        connectedPeripherals.set(peripheral.id, peripheral);
-        setConnectedDevices(Array.from(connectedPeripherals.values()));
-      }
-    });
-  };
-
-  useEffect(() => {
-    handleLocationPermission();
-
-    BleManager.enableBluetooth().then(() => {
-      console.log('Bluetooth is turned on!');
-    });
-
-    BleManager.start({ showAlert: false }).then(() => {
-      console.log('BleManager initialized');
-      handleGetConnectedDevices();
-    });
-
-    let discoverListener = bleManagerEmitter.addListener(
-      'BleManagerDiscoverPeripheral',
-      (peripheral: PeripheralItem) => {
-        console.log(`Discover -> Name: ${peripheral.name}, ID: ${peripheral.id}`);
-        peripheral.connected = false;
-        discoveredPeripherals.set(peripheral.id, peripheral);
-        setDiscoveredDevices(Array.from(discoveredPeripherals.values()));
-      },
-    );
-
-    let connectListener = bleManagerEmitter.addListener(
-      'BleManagerConnectPeripheral',
-      (peripheral: PeripheralItem) => {
-        console.log('BleManagerConnectPeripheral:', peripheral);
-      },
-    );
-
-    let stopScanListener = bleManagerEmitter.addListener(
-      'BleManagerStopScan',
-      () => {
-        setIsScanning(false);
-        console.log('scan stopped');
-        detectedPeripherals.clear();
-        BleManager.getDiscoveredPeripherals().then(
-          (discoveredPeripherals: Peripheral[]) => {
-            discoveredPeripherals.forEach(peripheral => {
-              const discovered: PeripheralItem = peripheralItem(peripheral);
-              discovered.connected = false;
-              detectedPeripherals.set(discovered.id, discovered);
-            })
-          }).finally(
-            () => setDetectedDevices(Array.from(detectedPeripherals.values()))
-          );
-      }
-    );
-
-    return () => {
-      discoverListener.remove();
-      connectListener.remove();
-      stopScanListener.remove();
-    };
-  }, []);
-
-  const scan = () => {
-    if (!isScanning) {
-      setDetectedDevices(Array.from(detectedPeripherals.values()));
-      BleManager.scan([], 5, true)
-        .then(() => {
-          console.log('Scanning...');
-          setIsScanning(true);
-        })
-        .catch(error => {
-          console.error(error);
-        });
-    }
-  };
-
-  const connect = (peripheral: PeripheralItem) => {
-    BleManager.createBond(peripheral.id)
-      .then(() => {
-        peripheral.connected = true;
-        connectedPeripherals.set(peripheral.id, peripheral);
-        let devices = Array.from(connectedPeripherals.values());
-        setConnectedDevices(Array.from(devices));
-        setDiscoveredDevices(Array.from(devices));
-        console.log('BLE device paired successfully');
-      })
-      .catch(() => {
-        throw Error('failed to bond');
-      });
-  };
-
-  const disconnect = (peripheral: PeripheralItem) => {
-    BleManager.removeBond(peripheral.id)
-      .then(() => {
-        peripheral.connected = false;
-        connectedPeripherals.delete(peripheral.id);
-        discoveredPeripherals.set(peripheral.id, peripheral);
-        let devices = Array.from(discoveredPeripherals.values());
-        setConnectedDevices(Array.from(devices));
-        setDiscoveredDevices(Array.from(devices));
-        Alert.alert(`Disconnected from ${peripheral.name}`);
-      })
-      .catch(() => {
-        throw Error('fail to remove the bond');
-      });
-  };
+  BluetoothManagerInit.call([]);
 
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
@@ -198,74 +58,38 @@ const App = () => {
         </TouchableOpacity>
         <ScrollView contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollContainer}>
-          <Text
-            style={[
-              styles.subtitle,
-              { color: isDarkMode ? Colors.white : Colors.black },
-            ]}>
-            Detected Devices:
-          </Text>
-          {detectedDevices.length > 0 ? (
-            detectedDevices.map((item, index) => (
-              <View key={index}>
-                <DeviceList
-                  peripheral={item}
-                  connect={connect}
-                  disconnect={disconnect}
-                />
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noDevicesText}>{
-              isScanning ? "Scanning..." : "No Bluetooth devices detected"
-            }</Text>
-          )}
-
-          <Text
-            style={[
-              styles.subtitle,
-              { color: isDarkMode ? Colors.white : Colors.black },
-            ]}>
-            Discovered Devices:
-          </Text>
-          {discoveredDevices.length > 0 ? (
-            discoveredDevices.map((item, index) => (
-              <View key={index}>
-                <DeviceList
-                  peripheral={item}
-                  connect={connect}
-                  disconnect={disconnect}
-                />
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noDevicesText}>No Bluetooth devices found</Text>
-          )}
-
-          <Text
-            style={[
-              styles.subtitle,
-              { color: isDarkMode ? Colors.white : Colors.black },
-            ]}>
-            Connected Devices:
-          </Text>
-          {connectedDevices.length > 0 ? (
-            connectedDevices.map((item, index) => (
-              <View key={index}>
-                <DeviceList
-                  peripheral={item}
-                  connect={connect}
-                  disconnect={disconnect}
-                />
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noDevicesText}>No connected devices</Text>
-          )}
+          <DeviceList
+            isDarkMode={isDarkMode}
+            title='Detected Devices:'
+            devicesArray={detectedDevices}
+            connect={connect}
+            disconnect={disconnect}
+            noDevicesText={isScanning ? "Scanning..." : "No Bluetooth devices detected"}
+          />
+          <DeviceList
+            isDarkMode={isDarkMode}
+            title='Discovered Devices:'
+            devicesArray={discoveredDevices}
+            connect={connect}
+            disconnect={disconnect}
+            noDevicesText='No Bluetooth devices found'
+          />
+          <DeviceList
+            isDarkMode={isDarkMode}
+            title='Connected Devices:'
+            devicesArray={connectedDevices}
+            connect={connect}
+            disconnect={disconnect}
+            noDevicesText='No connected devices'
+          />
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-export default App;
+export default () => (
+  <AppProvider>
+    <App />
+  </AppProvider>
+);

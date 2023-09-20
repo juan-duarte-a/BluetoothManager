@@ -1,47 +1,49 @@
-/* eslint-disable react-native/no-inline-styles */
-import { View, Text, TouchableOpacity } from 'react-native';
-import React from 'react';
-import { styles } from './styles/styles';
-import { Peripheral } from 'react-native-ble-manager';
-
-export interface PeripheralItem extends Peripheral {
-  connected: boolean;
-}
+import { Text, View } from "react-native"
+import { styles } from "./styles/styles"
+import { Colors } from "react-native/Libraries/NewAppScreen"
+import { Device, PeripheralItem } from "./Device"
+import { FC } from "react"
 
 interface DeviceListProps {
-  peripheral: PeripheralItem;
-  connect: (peripheral: PeripheralItem) => void;
-  disconnect: (peripheral: PeripheralItem) => void;
+  isDarkMode: boolean,
+  title: string,
+  devicesArray: PeripheralItem[],
+  connect: (peripheral: PeripheralItem) => void,
+  disconnect: (peripheral: PeripheralItem) => void,
+  noDevicesText: string
 }
 
-export const DeviceList: React.FC<DeviceListProps> = ({ peripheral, connect, disconnect }) => {
-  const { name, id, rssi, connected } = peripheral;
-
+export const DeviceList: FC<DeviceListProps> = ({
+  isDarkMode,
+  title,
+  devicesArray,
+  connect,
+  disconnect,
+  noDevicesText
+}) => {
   return (
     <>
-      {name && (
-        <View style={styles.deviceContainer}>
-          <View style={styles.deviceItem}>
-            <Text style={styles.deviceName}>{name}</Text>
-            <Text style={styles.deviceInfo}>ID: {id}</Text>
-            <Text style={styles.deviceInfo}>RSSI: {rssi}</Text>
+      <Text
+        style={[
+          styles.subtitle,
+          { color: isDarkMode ? Colors.white : Colors.black },
+        ]}>
+        {title}
+      </Text>
+      {devicesArray.length > 0 ? (
+        devicesArray.map((item, index) => (
+          <View key={index}>
+            <Device
+              peripheral={item}
+              connect={connect}
+              disconnect={disconnect} />
           </View>
-
-          <TouchableOpacity
-            onPress={() =>
-              connected ? disconnect(peripheral) : connect(peripheral)
-            }
-            style={styles.deviceButton}>
-            <Text
-              style={[
-                styles.scanButtonText,
-                { fontWeight: 'bold', fontSize: 16 },
-              ]}>
-              {connected ? 'Disconnect' : 'Connect'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        ))
+      ) : (
+        <Text style={styles.noDevicesText}>
+          {noDevicesText}
+        </Text>
       )}
     </>
   );
-};
+}
